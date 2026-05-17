@@ -3,197 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Télécommande MQTT Ampoule</title>
-    <!-- Bibliothèque MQTT via CDN -->
+    <title>Télécommande Pro</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
     <style>
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+        body { background-color: #141419; color: white; margin: 0; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
         
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            text-align: center; 
-            margin: 0;
-            padding: 0;
-            background-color: #141419; 
-            color: #ffffff;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            min-height: 100vh;
-            overflow: hidden;
-        }
+        .section { background: #2c2c35; border-radius: 15px; padding: 20px; }
+        h2 { font-size: 16px; color: #8e8e93; margin-top: 0; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
 
-        .container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
+        /* Ampoule & Slider */
+        .row { display: flex; justify-content: space-between; align-items: center; }
+        .btn-toggle { background: #444; border: none; color: white; padding: 15px 30px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-toggle.on { background: #ffcc00; color: black; box-shadow: 0 0 15px rgba(255,204,0,0.5); }
+        input[type=range] { width: 100%; margin-top: 15px; accent-color: #ffcc00; }
 
-        h1 { 
-            font-size: 24px;
-            font-weight: 400; 
-            margin-top: 0;
-            margin-bottom: 10px;
-            letter-spacing: 0.5px;
-        }
+        /* Écran / Message */
+        .input-group { display: flex; gap: 10px; }
+        input[type=text] { flex: 1; padding: 12px; border-radius: 8px; border: none; background: #1a1a24; color: white; font-size: 16px; }
+        .btn-send { background: #007bff; color: white; border: none; border-radius: 8px; padding: 0 20px; font-weight: bold; cursor: pointer; }
 
-        .subtitle {
-            font-size: 14px;
-            color: #8e8e93;
-            margin-bottom: 40px;
-        }
+        /* Thermostat */
+        .temp-display { font-size: 32px; font-weight: bold; color: #00d2ff; text-align: center; }
 
-        /* --- ZONE DE L'INTERRUPTEUR MOBILE --- */
-        .switch-container {
-            position: relative;
-            margin-bottom: 40px;
-        }
-
-        /* Le gros bouton circulaire tactile */
-        .power-btn {
-            width: 160px;
-            height: 160px;
-            border-radius: 50%;
-            background: #2c2c35;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.4), inset 0 2px 5px rgba(255,255,255,0.1);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        /* Icône Power en SVG */
-        .power-icon {
-            width: 65px;
-            height: 65px;
-            fill: none;
-            stroke: #555562;
-            stroke-width: 5;
-            stroke-linecap: round;
-            transition: all 0.3s ease;
-        }
-
-        /* Effet actif (pression sur l'écran du smartphone) */
-        .power-btn:active {
-            transform: scale(0.92);
-        }
-
-        /* --- ÉTAT ALLUMÉ --- */
-        body.is-on {
-            background-color: #1c1c16;
-        }
-
-        body.is-on .power-btn {
-            background: #ffcc00;
-            box-shadow: 0 0 40px rgba(255, 204, 0, 0.5), inset 0 2px 3px rgba(255,255,255,0.4);
-        }
-
-        body.is-on .power-icon {
-            stroke: #141419;
-            filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.2));
-        }
-
-        /* Petit voyant d'état */
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background-color: #ff3b30;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 8px;
-            vertical-align: middle;
-            transition: background-color 0.3s ease;
-        }
-
-        .status-dot.connected {
-            background-color: #34c759;
-            box-shadow: 0 0 8px #34c759;
-        }
+        /* Bouton Alarme */
+        .btn-alarme { width: 100%; background: #ff3b30; color: white; border: none; padding: 15px; font-size: 18px; font-weight: bold; border-radius: 10px; cursor: pointer; }
         
-        #status-bar { 
-            background-color: #1e1e24;
-            padding: 15px;
-            font-size: 13px; 
-            color: #aeaeac;
-            border-top: 1px solid #2c2c35;
-            width: 100%;
-        }
+        #status { font-size: 12px; color: #666; text-align: center; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>Télécommande IoT</h1>
-        <div class="subtitle">Contrôle de l'ampoule virtuelle</div>
-        
-        <div class="switch-container">
-            <button class="power-btn" id="mainButton" onclick="basculerAmpoule()">
-                <svg class="power-icon" viewBox="0 0 24 24">
-                    <path d="M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10"></path>
-                </svg>
-            </button>
+    <h1 style="margin: 0; font-size: 24px; text-align: center;">Maison Virtuelle</h1>
+
+    <!-- SECTION LUMIÈRE -->
+    <div class="section">
+        <h2>💡 Éclairage</h2>
+        <div class="row">
+            <span>État</span>
+            <button id="btnAmpoule" class="btn-toggle" onclick="toggleAmpoule()">Allumer</button>
+        </div>
+        <input type="range" id="sliderLum" min="10" max="100" value="100" onchange="changerLuminosite()">
+    </div>
+
+    <!-- SECTION ÉCRAN -->
+    <div class="section">
+        <h2>📺 Message LCD</h2>
+        <div class="input-group">
+            <input type="text" id="msgInput" placeholder="Tapez un message...">
+            <button class="btn-send" onclick="envoyerMessage()">Envoyer</button>
         </div>
     </div>
-    
-    <div id="status-bar">
-        <span class="status-dot" id="dot"></span>
-        <span id="status-text">Connexion au broker...</span>
+
+    <!-- SECTION TEMPÉRATURE -->
+    <div class="section">
+        <h2>🌡️ Température Salon</h2>
+        <div class="temp-display" id="mobileTemp">--.- °C</div>
     </div>
 
-    <script>
-        // Version optimisée mobile (WebSockets Port 8884 sécurisé obligatoire pour les smartphones)
-        const brokerUrl = 'wss://broker.hivemq.com:8884/mqtt';
-        const topic = 'mon_site_test/ampoule';
-        let etatAmpoule = "OFF";
+    <!-- SECTION ALARME -->
+    <button class="btn-alarme" id="btnAlarme" onclick="toggleAlarme()">🚨 DÉCLENCHER ALARME</button>
 
-        const client = mqtt.connect(brokerUrl);
-        const statusText = document.getElementById('status-text');
-        const dot = document.getElementById('dot');
-        const bodyEl = document.body;
+    <div id="status">Connexion en cours...</div>
+
+    <script>
+        const client = mqtt.connect('wss://broker.hivemq.com:8884/mqtt');
+        const prefix = 'mon_site_test/domotique/';
+        
+        let etatAmpoule = "OFF";
+        let etatAlarme = "OFF";
 
         client.on('connect', () => {
-            statusText.innerText = "Connecté à HiveMQ (Prêt)";
-            dot.classList.add('connected');
-            client.subscribe(topic);
+            document.getElementById('status').innerText = "Connecté à la centrale.";
+            // La télécommande s'abonne uniquement à la température pour la lire
+            client.subscribe(prefix + 'temperature');
         });
 
-        client.on('error', (err) => {
-            statusText.innerText = "Erreur de réseau";
-            dot.classList.remove('connected');
-        });
-
-        client.on('close', () => {
-            statusText.innerText = "Déconnecté du serveur";
-            dot.classList.remove('connected');
-        });
-
-        // Met à jour l'interface de la télécommande si l'état change ailleurs (Siri, autre site, etc.)
-        client.on('message', (receivedTopic, message) => {
-            if (receivedTopic === topic) {
-                const commande = message.toString();
-                if (commande === "ON") {
-                    bodyEl.classList.add('is-on');
-                    etatAmpoule = "ON";
-                } else if (commande === "OFF") {
-                    bodyEl.classList.remove('is-on');
-                    etatAmpoule = "OFF";
-                }
+        // Réception des données du PC (Température)
+        client.on('message', (topic, message) => {
+            if (topic === prefix + 'temperature') {
+                document.getElementById('mobileTemp').innerText = message.toString() + " °C";
             }
         });
 
-        function basculerAmpoule() {
-            const prochainEtat = (etatAmpoule === "ON") ? "OFF" : "ON";
-            // Publication immédiate du nouvel état
-            client.publish(topic, prochainEtat);
+        // 1. Bouton Ampoule
+        function toggleAmpoule() {
+            etatAmpoule = (etatAmpoule === "OFF") ? "ON" : "OFF";
+            const btn = document.getElementById('btnAmpoule');
+            btn.innerText = (etatAmpoule === "ON") ? "Éteindre" : "Allumer";
+            btn.classList.toggle('on');
+            client.publish(prefix + 'ampoule', etatAmpoule);
+        }
+
+        // 2. Slider Variateur
+        function changerLuminosite() {
+            const val = document.getElementById('sliderLum').value;
+            client.publish(prefix + 'luminosite', val.toString());
+        }
+
+        // 3. Envoyer Texte
+        function envoyerMessage() {
+            const texte = document.getElementById('msgInput').value;
+            if (texte !== "") {
+                client.publish(prefix + 'ecran', texte);
+                document.getElementById('msgInput').value = ""; // Vider le champ
+            }
+        }
+
+        // 4. Bouton Alarme
+        function toggleAlarme() {
+            etatAlarme = (etatAlarme === "OFF") ? "ON" : "OFF";
+            client.publish(prefix + 'alarme', etatAlarme);
+            const btn = document.getElementById('btnAlarme');
+            if (etatAlarme === "ON") {
+                btn.style.background = "#8b0000";
+                btn.innerText = "🛑 ARRÊTER L'ALARME";
+            } else {
+                btn.style.background = "#ff3b30";
+                btn.innerText = "🚨 DÉCLENCHER ALARME";
+            }
         }
     </script>
 </body>
