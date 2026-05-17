@@ -3,60 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Télécommande Pro</title>
+    <title>Télécommande Ultime</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: -apple-system, sans-serif; }
-        body { background-color: #141419; color: white; margin: 0; padding: 15px; display: flex; flex-direction: column; gap: 15px; }
+        body { background-color: #0a0a0f; color: white; margin: 0; padding: 15px; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; padding-bottom: 40px;}
         
-        .section { background: #2c2c35; border-radius: 12px; padding: 15px; }
-        h2 { font-size: 14px; color: #8e8e93; margin-top: 0; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
+        .section { background: #1a1a24; border: 1px solid #2a2a35; border-radius: 12px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        h2 { font-size: 13px; color: #8e8e93; margin-top: 0; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
 
-        /* Composants de base */
         .row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-        button { cursor: pointer; border: none; border-radius: 8px; font-weight: bold; transition: 0.2s; }
-        input[type=text], input[type=password] { padding: 10px; border-radius: 8px; border: none; background: #1a1a24; color: white; flex: 1; font-size: 16px; text-align: center; }
+        button { cursor: pointer; border: none; border-radius: 8px; font-weight: bold; transition: 0.2s; padding: 12px 20px; }
+        input[type=text], input[type=password] { padding: 12px; border-radius: 8px; border: none; background: #0a0a0f; color: white; flex: 1; font-size: 16px; border: 1px solid #333; }
         
         /* Éclairage */
-        .btn-toggle { background: #444; color: white; padding: 12px 20px; }
+        .btn-toggle { background: #333; color: white; width: 120px; }
         .btn-toggle.on { background: #ffcc00; color: black; box-shadow: 0 0 15px rgba(255,204,0,0.5); }
         input[type=range] { width: 100%; margin-top: 15px; accent-color: #ffcc00; }
-        input[type=color] { border: none; border-radius: 8px; width: 50px; height: 40px; cursor: pointer; background: transparent; }
+        input[type=color] { border: none; border-radius: 50%; width: 45px; height: 45px; cursor: pointer; background: transparent; padding: 0; }
+        input[type="color"]::-webkit-color-swatch { border: 2px solid #fff; border-radius: 50%; }
 
-        /* Media */
-        .media-controls { display: flex; justify-content: space-around; }
-        .btn-media { background: #3a3a45; color: white; padding: 15px 25px; font-size: 18px; }
+        /* Media & Actions */
+        .media-controls { display: flex; justify-content: space-between; gap: 10px;}
+        .btn-media { background: #2a2a35; color: white; flex: 1; font-size: 18px; }
         .btn-media:active { background: #00d2ff; }
+        .btn-action { background: #007bff; color: white; }
 
-        /* Serrure & Envoyer */
-        .btn-action { background: #007bff; color: white; padding: 10px 20px; }
+        /* Thermostat Display */
+        .temp-display { font-size: 28px; font-weight: bold; color: #00d2ff; text-align: center; }
 
         /* Alarme */
-        .btn-alarme { width: 100%; background: #ff3b30; color: white; padding: 15px; font-size: 16px; margin-top: 10px; }
+        .btn-alarme { width: 100%; background: #ff3b30; color: white; padding: 15px; font-size: 16px; margin-top: 5px; }
         
-        /* Overlay Alerte Intrusion */
-        #alerte-intrusion { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,0,0,0.9); z-index: 1000; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-        #alerte-intrusion h1 { font-size: 40px; margin-bottom: 10px; }
-        .btn-fermer-alerte { background: white; color: red; padding: 15px 30px; font-size: 18px; margin-top: 20px; }
+        /* Overlay Intrusion */
+        #alerte-intrusion { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,0,0,0.95); z-index: 1000; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        #alerte-intrusion h1 { font-size: 35px; margin-bottom: 10px; }
+        .btn-fermer-alerte { background: white; color: red; font-size: 18px; margin-top: 30px; }
 
-        #status { font-size: 12px; color: #666; text-align: center; }
+        #status { font-size: 12px; color: #666; text-align: center; padding-top: 10px; }
     </style>
 </head>
 <body>
 
-    <h1 style="margin: 0; font-size: 20px; text-align: center;">Maison Connectée</h1>
+    <h1 style="margin: 5px 0 10px 0; font-size: 22px; text-align: center;">Mon Application</h1>
 
-    <!-- LUMIÈRE RGB -->
+    <!-- 1. LUMIÈRE -->
     <div class="section">
-        <h2>💡 Éclairage RGB</h2>
+        <h2>💡 Éclairage Intense</h2>
         <div class="row">
-            <input type="color" id="couleurLumiere" value="#ffcc00" onchange="changerCouleur()">
+            <input type="color" id="couleurLumiere" value="#ff0000" onchange="changerCouleur()">
             <button id="btnAmpoule" class="btn-toggle" onclick="toggleAmpoule()">Allumer</button>
         </div>
         <input type="range" id="sliderLum" min="10" max="100" value="100" onchange="changerLuminosite()">
     </div>
 
-    <!-- MULTIMÉDIA -->
+    <!-- 2. MESSAGE -->
+    <div class="section">
+        <h2>💬 Écran du PC</h2>
+        <div class="row">
+            <input type="text" id="msgInput" placeholder="Texte à afficher...">
+            <button class="btn-action" onclick="envoyerMessage()">Écrire</button>
+        </div>
+    </div>
+
+    <!-- 3. THERMOSTAT -->
+    <div class="section">
+        <h2>🌡️ Température</h2>
+        <div class="temp-display" id="mobileTemp">--.- °C</div>
+    </div>
+
+    <!-- 4. SERRURE -->
+    <div class="section">
+        <h2>🔐 Digicode (Code: 1234)</h2>
+        <div class="row">
+            <input type="password" id="codeSerrure" placeholder="Code PIN..." inputmode="numeric">
+            <button class="btn-action" onclick="envoyerCode()">Ouvrir</button>
+        </div>
+    </div>
+
+    <!-- 5. MEDIA -->
     <div class="section">
         <h2>🎵 Jukebox</h2>
         <div class="media-controls">
@@ -66,24 +91,15 @@
         </div>
     </div>
 
-    <!-- DIGICODE SERRURE -->
-    <div class="section">
-        <h2>🔐 Serrure d'entrée</h2>
-        <div class="row">
-            <input type="password" id="codeSerrure" placeholder="Code PIN...">
-            <button class="btn-action" onclick="envoyerCode()">Ouvrir</button>
-        </div>
-    </div>
-
-    <!-- ALARME MANUELLE -->
-    <button class="btn-alarme" id="btnAlarme" onclick="toggleAlarme()">🚨 ACTIVER ALARME</button>
+    <!-- 6. ALARME -->
+    <button class="btn-alarme" id="btnAlarme" onclick="toggleAlarme()">🚨 ACTIVER ALARME GÉNÉRALE</button>
     <div id="status">Connexion en cours...</div>
 
-    <!-- POPUP INTRUSION CACHÉE -->
+    <!-- POPUP INTRUSION -->
     <div id="alerte-intrusion">
         <h1>⚠️ INTRUSION DETECTÉE</h1>
-        <p>Un mouvement a été repéré dans le salon !</p>
-        <button class="btn-fermer-alerte" onclick="fermerAlerte()">J'ai compris</button>
+        <p>Capteur de mouvement déclenché !</p>
+        <button class="btn-fermer-alerte" onclick="fermerAlerte()">Ignorer l'alerte</button>
     </div>
 
     <script>
@@ -94,24 +110,24 @@
         let etatAlarme = "OFF";
 
         client.on('connect', () => {
-            document.getElementById('status').innerText = "Connecté à la centrale.";
-            client.subscribe(prefix + 'mouvement'); // Écoute le détecteur de mouvement
+            document.getElementById('status').innerText = "✅ Connecté via MQTT";
+            client.subscribe(prefix + 'mouvement');
+            client.subscribe(prefix + 'temperature');
         });
 
-        // Le mobile réagit si le PC signale un mouvement !
         client.on('message', (topic, message) => {
+            // Reçoit la température
+            if (topic === prefix + 'temperature') {
+                document.getElementById('mobileTemp').innerText = message.toString() + " °C";
+            }
+            // Reçoit l'alerte intrusion
             if (topic === prefix + 'mouvement' && message.toString() === "INTRUSION") {
                 document.getElementById('alerte-intrusion').style.display = "flex";
-                // Fait vibrer le téléphone (Si le navigateur l'autorise)
-                if ("vibrate" in navigator) {
-                    navigator.vibrate([500, 200, 500, 200, 1000]);
-                }
+                if ("vibrate" in navigator) navigator.vibrate([500, 200, 500]);
             }
         });
 
-        function fermerAlerte() {
-            document.getElementById('alerte-intrusion').style.display = "none";
-        }
+        function fermerAlerte() { document.getElementById('alerte-intrusion').style.display = "none"; }
 
         function toggleAmpoule() {
             etatAmpoule = (etatAmpoule === "OFF") ? "ON" : "OFF";
@@ -119,24 +135,26 @@
             btn.innerText = (etatAmpoule === "ON") ? "Éteindre" : "Allumer";
             btn.classList.toggle('on');
             client.publish(prefix + 'ampoule', etatAmpoule);
+            // On renvoie la couleur et luminosité direct pour appliquer l'effet
+            if(etatAmpoule === "ON") {
+                changerCouleur();
+                changerLuminosite();
+            }
         }
 
-        function changerLuminosite() {
-            client.publish(prefix + 'luminosite', document.getElementById('sliderLum').value.toString());
+        function changerLuminosite() { client.publish(prefix + 'luminosite', document.getElementById('sliderLum').value.toString()); }
+        function changerCouleur() { client.publish(prefix + 'couleur', document.getElementById('couleurLumiere').value); }
+        
+        function envoyerMessage() {
+            const txt = document.getElementById('msgInput').value;
+            if (txt) { client.publish(prefix + 'ecran', txt); document.getElementById('msgInput').value = ""; }
         }
 
-        function changerCouleur() {
-            client.publish(prefix + 'couleur', document.getElementById('couleurLumiere').value);
-        }
-
-        function ctrlMedia(action) {
-            client.publish(prefix + 'media', action);
-        }
+        function ctrlMedia(action) { client.publish(prefix + 'media', action); }
 
         function envoyerCode() {
-            const code = document.getElementById('codeSerrure').value;
-            client.publish(prefix + 'serrure', code);
-            document.getElementById('codeSerrure').value = ""; // Vide le champ après envoi
+            client.publish(prefix + 'serrure', document.getElementById('codeSerrure').value);
+            document.getElementById('codeSerrure').value = "";
         }
 
         function toggleAlarme() {
@@ -144,11 +162,9 @@
             client.publish(prefix + 'alarme', etatAlarme);
             const btn = document.getElementById('btnAlarme');
             if (etatAlarme === "ON") {
-                btn.style.background = "#8b0000";
-                btn.innerText = "🛑 ARRÊTER L'ALARME";
+                btn.style.background = "#8b0000"; btn.innerText = "🛑 ARRÊTER L'ALARME";
             } else {
-                btn.style.background = "#ff3b30";
-                btn.innerText = "🚨 ACTIVER ALARME";
+                btn.style.background = "#ff3b30"; btn.innerText = "🚨 ACTIVER ALARME GÉNÉRALE";
             }
         }
     </script>
